@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Payroll Calculator – Mauritius (2025)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 960px;
+            margin: 50px auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #003366;
+            margin-bottom: 30px;
+        }
+        label {
+            margin-top: 15px;
+            display: block;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            margin-top: 25px;
+            padding: 12px 30px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 40px;
+            padding: 25px;
+            background: #f0fdf4;
+            border-left: 6px solid #28a745;
+            border-radius: 8px;
+        }
+        .summary p {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Payroll Calculator – Mauritius (2025)</h1>
+        <label for="name">Employee Name</label>
+        <input type="text" id="name"/>
+
+        <label for="salary">Basic Monthly Salary (MUR)</label>
+        <input type="number" id="salary"/>
+
+        <label for="daysWorked">Days Worked This Month</label>
+        <input type="number" id="daysWorked" max="31"/>
+
+        <label for="sickLeave">Sick Leave Taken</label>
+        <input type="number" id="sickLeave" max="15"/>
+
+        <label for="dependents">Number of Dependents</label>
+        <select id="dependents">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4 or more</option>
+        </select>
+
+        <button onclick="calculatePayroll()">Calculate Payroll</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculatePayroll() {
+            const name = document.getElementById("name").value;
+            const salary = parseFloat(document.getElementById("salary").value);
+            const daysWorked = parseInt(document.getElementById("daysWorked").value);
+            const sickLeave = parseInt(document.getElementById("sickLeave").value);
+            const dependents = parseInt(document.getElementById("dependents").value);
+
+            const annualSalary = salary * 12;
+
+            const deductions = [0, 120000, 200000, 290000, 375000];
+            const dependentDeduction = deductions[Math.min(dependents, 4)];
+
+            const taxableIncome = Math.max(annualSalary - dependentDeduction, 0);
+
+            const taxBrackets = [
+                { upTo: 400000, rate: 0 },
+                { upTo: 440000, rate: 0.02 },
+                { upTo: 500000, rate: 0.05 },
+                { upTo: 600000, rate: 0.08 },
+                { upTo: 800000, rate: 0.10 },
+                { upTo: 1100000, rate: 0.12 },
+                { upTo: 1500000, rate: 0.14 },
+                { upTo: 2000000, rate: 0.16 },
+                { upTo: Infinity, rate: 0.18 }
+            ];
+
+            let incomeLeft = taxableIncome;
+            let tax = 0;
+            let lower = 0;
+
+            for (const bracket of taxBrackets) {
+                const range = bracket.upTo - lower;
+                const taxed = Math.min(incomeLeft, range);
+                tax += taxed * bracket.rate;
+                incomeLeft -= taxed;
+                lower = bracket.upTo;
+                if (incomeLeft <= 0) break;
+            }
+
+            const monthlyTax = tax / 12;
+            const nsfEmployee = salary * 0.01;
+            const nsfEmployer = salary * 0.025;
+            const hrdc = salary * 0.015;
+            const prgf = salary * 0.045;
+            const netSalary = salary - monthlyTax - nsfEmployee;
+
+            document.getElementById("result").innerHTML = `
+                <div class="summary">
+                    <h3>Payroll Summary for ${name}</h3>
+                    <p><strong>Gross Salary:</strong> Rs ${salary.toFixed(2)}</p>
+                    <p><strong>Days Worked:</strong> ${daysWorked}</p>
+                    <p><strong>Sick Leave:</strong> ${sickLeave} day(s)</p>
+                    <p><strong>Annual Taxable Income:</strong> Rs ${taxableIncome.toLocaleString()}</p>
+                    <p><strong>Monthly Tax Deducted:</strong> Rs ${monthlyTax.toFixed(2)}</p>
+                    <p><strong>NSF (Employee):</strong> Rs ${nsfEmployee.toFixed(2)}</p>
+                    <p><strong>NSF (Employer):</strong> Rs ${nsfEmployer.toFixed(2)}</p>
+                    <p><strong>HRDC Levy (Employer):</strong> Rs ${hrdc.toFixed(2)}</p>
+                    <p><strong>PRGF (Employer):</strong> Rs ${prgf.toFixed(2)}</p>
+                    <hr />
+                    <p><strong>Net Salary (After Tax & NSF):</strong> Rs ${netSalary.toFixed(2)}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
